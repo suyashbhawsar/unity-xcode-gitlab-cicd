@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Variables (replace these with your actual values)
-PROJECT_PATH="/path/to/your/Unity-iPhone.xcodeproj"
-WORKSPACE_PATH="/path/to/your/Unity-iPhone.xcworkspace"
+PROJECT_PATH="/Users/admin/Desktop/Builds/iOS/Unity-iPhone.xcodeproj"
+WORKSPACE_PATH="/Users/admin/Desktop/Builds/iOS/Unity-iPhone.xcworkspace"
 SCHEME_NAME="Unity-iPhone"
 CODE_SIGN_IDENTITY="Apple Development: YOUR_NAME (YOUR_ID)"
 PROVISIONING_PROFILE_SPECIFIER="YOUR_PROVISIONING_PROFILE"
