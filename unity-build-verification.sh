@@ -58,7 +58,7 @@ verify_target_membership() {
 verify_native_proxy() {
     echo "Verifying NativeCallProxy.h..."
     
-    NATIVE_PROXY_PATH="$UNITY_BUILD_DIR/Unity-iPhone/Libraries/Plugins/iOS/NativeCallProxy.h"
+    NATIVE_PROXY_PATH="$UNITY_BUILD_DIR/Libraries/Plugins/iOS/NativeCallProxy.h"
     if [ ! -f "$NATIVE_PROXY_PATH" ]; then
         echo -e "${RED}✗ NativeCallProxy.h not found${NC}"
         exit 1
