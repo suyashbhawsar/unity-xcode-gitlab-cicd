@@ -19,96 +19,95 @@ check_status() {
     fi
 }
 
-# Check Unity build output
-verify_unity_build() {
-    echo "Verifying Unity build..."
+# Configure Xcode project settings
+configure_xcode_project() {
+    echo "Configuring Xcode project settings..."
     
-    if [ ! -d "$UNITY_BUILD_DIR" ]; then
-        echo -e "${RED}✗ Unity build directory not found${NC}"
-        exit 1
-    fi
+    # Uncheck Unity-iPhone and check UnityFramework in Data folder
+    /usr/libexec/PlistBuddy -c "Set :objects:${DATA_FOLDER_ID}:target:Unity-iPhone 0" \
+        "$UNITY_BUILD_DIR/$XCODE_PROJECT/project.pbxproj"
+    /usr/libexec/PlistBuddy -c "Set :objects:${DATA_FOLDER_ID}:target:UnityFramework 1" \
+        "$UNITY_BUILD_DIR/$XCODE_PROJECT/project.pbxproj"
     
-    if [ ! -d "$UNITY_BUILD_DIR/$XCODE_PROJECT" ]; then
-        echo -e "${RED}✗ Xcode project not found${NC}"
-        exit 1
-    fi
-    
-    check_status "Unity build verification"
+    check_status "Xcode project configuration"
 }
 
-# Verify Data folder target membership
-verify_target_membership() {
-    echo "Verifying Data folder target membership..."
+# Set NativeCallProxy.h to public
+set_native_proxy_public() {
+    echo "Setting NativeCallProxy.h to public..."
     
-    # Use xcodebuild to list targets
-    xcodebuild -project "$UNITY_BUILD_DIR/$XCODE_PROJECT" -list | grep "UnityFramework" > /dev/null
-    check_status "Target membership verification"
+    # Find the file reference ID for NativeCallProxy.h
+    NATIVE_PROXY_FILE_REF=$(grep -A 1 "NativeCallProxy.h" "$UNITY_BUILD_DIR/$XCODE_PROJECT/project.pbxproj" | \
+        grep "isa = PBXFileReference" | cut -d '"' -f 2)
+    
+    # Set the file to public
+    /usr/libexec/PlistBuddy -c "Add :objects:$NATIVE_PROXY_FILE_REF:attributes:Public bool true" \
+        "$UNITY_BUILD_DIR/$XCODE_PROJECT/project.pbxproj"
+    
+    check_status "NativeCallProxy.h visibility setting"
 }
 
-# Verify NativeCallProxy.h settings
-verify_native_proxy() {
-    echo "Verifying NativeCallProxy.h..."
+# Configure framework embedding
+configure_framework_embedding() {
+    echo "Configuring framework embedding..."
     
-    NATIVE_PROXY_PATH="$UNITY_BUILD_DIR/Unity-iPhone/Libraries/Plugins/iOS/NativeCallProxy.h"
-    if [ ! -f "$NATIVE_PROXY_PATH" ]; then
-        echo -e "${RED}✗ NativeCallProxy.h not found${NC}"
-        exit 1
-    fi
+    # Set UnityFramework to "Embed & Sign"
+    xcodeproj="$UNITY_BUILD_DIR/$XCODE_PROJECT"
+    ruby -e "
+        require 'xcodeproj'
+        project = Xcodeproj::Project.open('$xcodeproj')
+        target = project.targets.find { |t| t.name == 'UnityFramework' }
+        target.frameworks_build_phase.files.each do |file|
+            file.settings ||= {}
+            file.settings['ATTRIBUTES'] = ['CodeSignOnCopy', 'RemoveHeadersOnCopy']
+        end
+        project.save
+    "
     
-    # Check if file is public in project settings
-    /usr/libexec/PlistBuddy -c "Print :objects:$NATIVE_PROXY_FILE_REF:attributes:Public" \
-        "$UNITY_BUILD_DIR/$XCODE_PROJECT/project.pbxproj" > /dev/null
-    check_status "NativeCallProxy.h visibility verification"
+    check_status "Framework embedding configuration"
 }
 
-# Verify framework embedding settings
-verify_framework_settings() {
-    echo "Verifying framework embedding..."
+# Move frameworks to correct locations
+move_frameworks() {
+    echo "Moving frameworks to correct locations..."
     
-    # Check Agora frameworks
-    grep -r "Embed & Sign" "$UNITY_BUILD_DIR/$XCODE_PROJECT/project.pbxproj" | grep "Agora" > /dev/null
-    check_status "Framework embedding verification"
+    # Create directories if they don't exist
+    mkdir -p "$MOBILE_APP_DIR/unity/builds/ios"
+    mkdir -p "$MOBILE_APP_DIR/ios"
+    
+    # Move UnityFramework
+    cp -R "$UNITY_BUILD_DIR/Products/UnityFramework" "$MOBILE_APP_DIR/unity/builds/ios/"
+    
+    # Move Frameworks folder
+    mv "$MOBILE_APP_DIR/unity/builds/ios/UnityFramework/Frameworks" "$MOBILE_APP_DIR/ios/"
+    
+    check_status "Framework relocation"
 }
 
-# Verify framework integration
-verify_integration() {
-    echo "Verifying framework integration..."
+# Install pods
+install_pods() {
+    echo "Installing pods..."
     
-    if [ ! -d "$MOBILE_APP_DIR/unity/builds/ios/UnityFramework.framework" ]; then
-        echo -e "${RED}✗ UnityFramework not copied to mobile app${NC}"
-        exit 1
-    fi
+    cd "$MOBILE_APP_DIR/ios" || exit 1
+    rm -rf Pods
+    rm -f Podfile.lock
+    npx pod-install
     
-    if [ ! -d "$MOBILE_APP_DIR/ios/Frameworks" ]; then
-        echo -e "${RED}✗ Frameworks folder not in iOS directory${NC}"
-        exit 1
-    fi
-    
-    check_status "Framework integration verification"
+    check_status "Pod installation"
 }
 
-# Verify pods installation
-verify_pods() {
-    echo "Verifying pods installation..."
-    
-    if [ ! -d "$MOBILE_APP_DIR/ios/Pods" ]; then
-        echo -e "${RED}✗ Pods not installed${NC}"
-        exit 1
-    fi
-    
-    check_status "Pods verification"
-}
-
-# Main verification flow
+# Main execution flow
 main() {
-    echo "Starting build verification..."
+    echo "Starting build process..."
+    
     verify_unity_build
-    verify_target_membership
-    verify_native_proxy
-    verify_framework_settings
-    verify_integration
-    verify_pods
-    echo -e "${GREEN}All verifications passed successfully!${NC}"
+    configure_xcode_project
+    set_native_proxy_public
+    configure_framework_embedding
+    move_frameworks
+    install_pods
+    
+    echo -e "${GREEN}Build process completed successfully!${NC}"
 }
 
 main
