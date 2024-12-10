@@ -142,8 +142,8 @@ namespace BuildTools
             Debug.Log("Applying build settings...");
  
             // Example: Set player settings
-            PlayerSettings.productName = "Your Game Name";
-            PlayerSettings.bundleVersion = "1.0.0";
+            PlayerSettings.productName = "Crypto Hunters";
+            PlayerSettings.bundleVersion = "0.1";
  
             // iOS specific settings
             PlayerSettings.iOS.appleEnableAutomaticSigning = true;
