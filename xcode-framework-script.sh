@@ -2,7 +2,6 @@
 
 # Configuration
 PROJECT_FILE="Unity-iPhone.xcodeproj/project.pbxproj"
-TEMP_FILE="${PROJECT_FILE}.temp"
 
 # List of frameworks to process
 declare -a FRAMEWORKS=(
@@ -31,29 +30,27 @@ check_file() {
 process_file() {
     echo "Processing $PROJECT_FILE..."
     
-    # Create temporary file
-    cp "$PROJECT_FILE" "$TEMP_FILE"
-    
-    while IFS= read -r line; do
-        # Write the current line to output
-        echo "$line"
-        
-        # Check if line contains framework reference
-        for framework in "${FRAMEWORKS[@]}"; do
-            if [[ $line =~ [[:space:]]*[A-F0-9]{24}[[:space:]]*\*[[:space:]]*\/${framework}\.framework[[:space:]]*in[[:space:]]*Frameworks ]]; then
-                # Extract UUID and fileRef from the original line
-                uuid=$(echo "$line" | grep -o '^[[:space:]]*[A-F0-9]\{24\}')
-                fileRef=$(echo "$line" | grep -o 'fileRef = [A-F0-9]\{24\}')
-                
-                # Create the Embed Frameworks entry
-                embed_line="$uuid /* $framework.framework in Embed Frameworks */ = {isa = PBXBuildFile; $fileRef; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };"
-                echo "$embed_line"
-            fi
-        done
-    done < "$PROJECT_FILE" > "$TEMP_FILE"
-    
-    # Replace original file with modified version
-    mv "$TEMP_FILE" "$PROJECT_FILE"
+    # Read and modify the file in-place
+    awk -v frameworks="$(IFS=','; echo "${FRAMEWORKS[*]}")" '
+    BEGIN {
+        split(frameworks, fwArray, ",");
+    }
+    {
+        print $0;  # Print the current line as is
+
+        # Check if the line matches any framework reference
+        for (fw in fwArray) {
+            framework = fwArray[fw];
+            if ($0 ~ "[[:space:]]*[A-F0-9]{24}[[:space:]]*\\*[[:space:]]*/" framework "\\.framework[[:space:]]*in[[:space:]]*Frameworks") {
+                match($0, /^[[:space:]]*[A-F0-9]{24}/, uuid);
+                match($0, /fileRef = [A-F0-9]{24}/, fileRef);
+                if (uuid[0] && fileRef[0]) {
+                    embed_line = uuid[0] " /* " framework ".framework in Embed Frameworks */ = {isa = PBXBuildFile; " fileRef[0] "; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };";
+                    print embed_line;  # Add the Embed Framework entry
+                }
+            }
+        }
+    }' "$PROJECT_FILE" > "$PROJECT_FILE.modified" && mv "$PROJECT_FILE.modified" "$PROJECT_FILE"
 }
 
 # Main execution
