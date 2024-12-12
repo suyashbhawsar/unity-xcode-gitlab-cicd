@@ -2,7 +2,6 @@
 
 # Configuration
 PROJECT_FILE="Unity-iPhone.xcodeproj/project.pbxproj"
-BACKUP_FILE="${PROJECT_FILE}.backup"
 TEMP_FILE="${PROJECT_FILE}.temp"
 
 # List of frameworks to process
@@ -26,23 +25,6 @@ check_file() {
         echo "Error: $PROJECT_FILE not found!"
         exit 1
     fi
-}
-
-# Function to create backup
-create_backup() {
-    echo "Creating backup of $PROJECT_FILE..."
-    cp "$PROJECT_FILE" "$BACKUP_FILE"
-    if [ $? -ne 0 ]; then
-        echo "Error: Failed to create backup!"
-        exit 1
-    fi
-}
-
-# Function to restore backup in case of failure
-restore_backup() {
-    echo "Error occurred. Restoring from backup..."
-    mv "$BACKUP_FILE" "$PROJECT_FILE"
-    exit 1
 }
 
 # Main processing function
@@ -80,11 +62,7 @@ echo "Starting Xcode project modification..."
 # Check if project file exists
 check_file
 
-# Create backup
-create_backup
-
 # Process file
-process_file || restore_backup
+process_file
 
 echo "Modification completed successfully!"
-echo "Original file backed up as $BACKUP_FILE"
