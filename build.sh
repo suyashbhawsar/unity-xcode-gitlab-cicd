@@ -17,5 +17,5 @@ cd ..
 wget -O crypto-hunters-ar-game/Assets/Editor/AutoBuild.cs https://raw.githubusercontent.com/suyashbhawsar/unity-xcode-gitlab-cicd/refs/heads/main/AutoBuild.cs
 /Applications/Unity/Unity.app/Contents/MacOS/Unity -batchmode -quit -projectPath crypto-hunters-ar-game -executeMethod BuildTools.AutoBuild.BuildProject
 
-wget -O crypto-hunters-ar-game/Assets/Editor/AutoBuild.cs https://raw.githubusercontent.com/suyashbhawsar/unity-xcode-gitlab-cicd/refs/heads/main/modify_xcode_project.rb
+wget https://raw.githubusercontent.com/suyashbhawsar/unity-xcode-gitlab-cicd/refs/heads/main/modify_xcode_project.rb
 ruby modify_xcode_project.rb
