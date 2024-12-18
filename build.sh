@@ -19,3 +19,4 @@ wget -O crypto-hunters-ar-game/Assets/Editor/AutoBuild.cs https://raw.githubuser
 
 wget https://raw.githubusercontent.com/suyashbhawsar/unity-xcode-gitlab-cicd/refs/heads/main/modify_xcode_project.rb
 ruby modify_xcode_project.rb
+rm -rf ios/Pods && rm -f ios/Podfile.lock && npx pod-install
