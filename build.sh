@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#git clone git@gitlab.com:seaside1/crypto-hunters-ar-game/crypto-hunters-mobile-app.git
-#git clone git@gitlab.com:seaside1/crypto-hunters-ar-game/crypto-hunters-ar-game.git
+#git clone --depth 1 git@gitlab.com:seaside1/crypto-hunters-ar-game/crypto-hunters-mobile-app.git
+#git clone --depth 1 git@gitlab.com:seaside1/crypto-hunters-ar-game/crypto-hunters-ar-game.git
 
 cd crypto-hunters-ar-game
 git checkout refactor_integration_IOS
